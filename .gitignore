@@ -41,3 +41,6 @@ coverage/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Ignore README.md
+README.md
