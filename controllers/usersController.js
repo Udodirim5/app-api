@@ -1,19 +1,18 @@
-const fs = require("fs");
-
-const users = JSON.parse(
-  fs.readFileSync(`${__dirname}/../nft-data/data/nft-users.json`)
-);
+const User = require("./../models/usersModel");
+const catchAsync = require("./../utils/catchAsync");
 
 // USERS CONTROLLERS
 // GET USERS
-exports.getAllUsers = (req, res) => {
+exports.getAllUsers = catchAsync(async (req, res) => {
+  const users = await User.find();
+
+  // SEND RESPONSE
   res.status(201).json({
     status: "success",
-    requestTime: req.requestTime,
     result: users.length,
     data: { users },
   });
-};
+});
 
 // CREATE USER
 exports.createUser = (req, res) => {

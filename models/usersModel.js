@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "user must have a password"],
     minlength: [8, "password must be at least 8 characters long"],
+    maxlength: [249, "password must not exceed 249 characters"],
+    select: false,
   },
 
   passwordConfirm: {
@@ -41,6 +43,12 @@ const userSchema = new mongoose.Schema({
       },
       message: "passwords are not the same",
     },
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+    select: false,
   },
 });
 

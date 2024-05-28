@@ -89,6 +89,7 @@ const nftSchema = new mongoose.Schema(
       default: Date.now(),
       select: false,
     },
+
     secretNfts: {
       type: Boolean,
       default: false,
