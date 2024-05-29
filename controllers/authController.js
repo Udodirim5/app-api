@@ -10,7 +10,7 @@ const signToken = (id) => {
   });
 };
 
-//  SIGN UP
+// SIGN UP
 exports.signUp = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -52,5 +52,38 @@ exports.login = catchAsync(async (req, res, next) => {
       user,
     },
   });
+  next();
+});
+
+// PROTECTING DATA
+exports.protect = catchAsync(async (req, res, next) => {
+  // 1) Getting token and check if it exists
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  // VALLIDATE TOKEN
+  if (!token) {
+    return next(
+      new AppError("You are not logged in! Please log in to get access.", 401)
+    );
+  }
+
+  // IF USER EXIST
+  const freshUser = await User.findOne(decoded.id);
+  if (!freshUser) {
+    return next(
+      new AppError(
+        "The user belonging to this token does no longer exist.",
+        401
+      )
+    );
+  }
+
+  // CHANGED PASSWORD
   next();
 });
