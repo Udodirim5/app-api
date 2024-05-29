@@ -1,3 +1,4 @@
+const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("./../models/usersModel");
 const catchAsync = require("./../utils/catchAsync");
@@ -66,15 +67,18 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
   }
 
-  // VALLIDATE TOKEN
   if (!token) {
     return next(
       new AppError("You are not logged in! Please log in to get access.", 401)
     );
   }
 
+  // VALLIDATE TOKEN
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log(decoded);
+
   // IF USER EXIST
-  const freshUser = await User.findOne(decoded.id);
+  const freshUser = await User.findById(decoded.id);
   if (!freshUser) {
     return next(
       new AppError(
