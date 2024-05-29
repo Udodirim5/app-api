@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("./../models/usersModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
+const { decode } = require("punycode");
 
 //CREATE TOKEN
 const signToken = (id) => {
@@ -13,12 +14,13 @@ const signToken = (id) => {
 
 // SIGN UP
 exports.signUp = catchAsync(async (req, res, next) => {
-  const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
-  });
+  const newUser = await User.create(req.body);
+  // const newUser = await User.create({
+  //   name: req.body.name,
+  //   email: req.body.email,
+  //   password: req.body.password,
+  //   passwordConfirm: req.body.passwordConfirm,
+  // });
 
   const token = signToken(newUser._id);
 
@@ -78,8 +80,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   console.log(decoded);
 
   // IF USER EXIST
-  const freshUser = await User.findById(decoded.id);
-  if (!freshUser) {
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
     return next(
       new AppError(
         "The user belonging to this token does no longer exist.",
@@ -89,5 +91,13 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // CHANGED PASSWORD
+  if (currentUser.changedPasswordAfter(decoded.iat)) {
+    return next(
+      new AppError("User recently changed password! Please log in again.", 401)
+    );
+  }
+
+  // USER WILL HAVE ACCESS TO THE PROTECTED DATAs
+  req.user = currentUser;
   next();
 });
