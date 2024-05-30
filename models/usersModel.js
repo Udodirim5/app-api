@@ -26,6 +26,15 @@ const userSchema = new mongoose.Schema({
     // default: "default.jpg",
   },
 
+  role: {
+    type: String,
+    default: "user",
+    enum: {
+      values: ["user", "admin", "creator", "guide" ],
+      message: "role must be admin creator guide or user",
+    },
+  },
+
   password: {
     type: String,
     required: [true, "user must have a password"],
@@ -44,10 +53,10 @@ const userSchema = new mongoose.Schema({
       message: "passwords are not the same",
     },
   },
-  passwordChangedAt: {
-    type: Date,
-    default: Date.now(),
-  },
+  // passwordChangedAt: {
+  //   type: Date,
+  //   default: Date.now(),
+  // },
 
   createdAt: {
     type: Date,
