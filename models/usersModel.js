@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
@@ -30,7 +31,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "user",
     enum: {
-      values: ["user", "admin", "creator", "guide" ],
+      values: ["user", "admin", "creator", "guide"],
       message: "role must be admin creator guide or user",
     },
   },
@@ -53,10 +54,15 @@ const userSchema = new mongoose.Schema({
       message: "passwords are not the same",
     },
   },
-  // passwordChangedAt: {
-  //   type: Date,
-  //   default: Date.now(),
-  // },
+  passwordResetToken: {
+    type: String,
+    select: false,
+  },
+
+  passwordResetExpires: {
+    type: Date,
+    select: false,
+  },
 
   createdAt: {
     type: Date,
@@ -94,6 +100,17 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
   // WILL RETURN FALSE BY DEFAULT
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  return resetToken;
 };
 
 const User = mongoose.model("User", userSchema);
