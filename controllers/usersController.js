@@ -1,6 +1,6 @@
-const User = require('./../models/usersModel');
-const catchAsync = require('./../utils/catchAsync');
-const AppError = require('./../utils/appError');
+const User = require("./../models/usersModel");
+const catchAsync = require("./../utils/catchAsync");
+const AppError = require("./../utils/appError");
 
 // Utility function to filter allowed fields
 const filterObj = (obj, ...allowedFields) => {
@@ -18,14 +18,15 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
     return next(
       new AppError(
-        'This route is not for password updates. Please use /updateMyPassword',
+        "This route is not for password updates. Please use /updateMyPassword",
         400
       )
     );
   }
 
   // 2. Filter the request body to include only allowed fields
-  const filteredBody = filterObj(req.body, 'name', 'email');
+  const filteredBody = filterObj(req.body, "name", "email");
+  // FIXME: USER GET LOGGED OUT WHEN DATA IS UPDATED
 
   // 3. Update the user data
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
@@ -35,12 +36,29 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 
   // 4. Send the response with the updated user data
   res.status(200).json({
-    status: 'success',
+    status: "success",
     data: {
       user: updatedUser,
     },
   });
 });
+
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  // Log to check if the function is being called
+  console.log("deleteMe function called");
+
+  // Log to check if req.user.id is available
+  console.log("User ID:", req.user.id);
+  // Update the user's active status to false
+  await User.findByIdAndUpdate(req.user.id, { active: false });
+
+  // Send the response
+  res.status(204).json({
+    status: "success",
+    data: null,
+  });
+});
+
 // GET USERS
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find();
