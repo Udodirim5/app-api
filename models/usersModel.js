@@ -2,7 +2,6 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
-// const slugify = require("slugify");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -24,7 +23,7 @@ const userSchema = new mongoose.Schema({
 
   photo: {
     type: String,
-    // default: "default.jpg",
+    default: "default.jpg",
   },
 
   role: {
@@ -96,7 +95,6 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
       10
     );
     return JWTTimestamp < changedTimestamp;
-    console.log(changedTimestamp, JWTTimestamp);
   }
   // WILL RETURN FALSE BY DEFAULT
   return false;

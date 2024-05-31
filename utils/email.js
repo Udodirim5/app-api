@@ -1,17 +1,17 @@
 const nodemailer = require("nodemailer");
-// FIXME: EMAIL FUNCTIONALITY NOT YET WORKING 
+// FIXME: EMAIL FUNCTIONALITY OF FORGOT PASSWORD IS NOT YET WORKING
 const sendEmail = async (options) => {
   try {
     // Create a transporter
     const transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
+      host: 'smtp.ethereal.email',
       port: 587,
       auth: {
-        user: "pattie.hudson@ethereal.email",
-        pass: "26UUqSFGcJFPb7mpdd",
-      },
-    });
-
+          user: 'monserrat55@ethereal.email',
+          pass: 'UGBBmRwC5GDnJfatMu'
+      }
+  });
+  
     // Define the mail options
     const mailOptions = {
       from: "mail@nftmarketplace.com", // Sender address

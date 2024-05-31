@@ -12,19 +12,32 @@ const signToken = (id) => {
   });
 };
 
-// SIGN UP
-exports.signUp = catchAsync(async (req, res, next) => {
-  const newUser = await User.create(req.body);
+// const createSendToken = (user, statusCode, res) => {
+//   const token = signToken(newUser._id);
+//   const cookieOptions = {
+//     expires: new Date(
+//       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+//     ),
+//     httpOnly: true,
+//   };
+// };
 
-  const token = signToken(newUser._id);
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
 
-  res.status(201).json({
+  res.status(statusCode).json({
     status: "success",
     token,
     data: {
-      user: newUser,
+      user,
     },
   });
+};
+
+// SIGN UP
+exports.signUp = catchAsync(async (req, res, next) => {
+  const newUser = await User.create(req.body);
+  createSendToken(newUser, 201, res);
 });
 
 // LOG IN
@@ -40,15 +53,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect email or password!", 401));
   }
   // 3) If everything ok, send token to client
-  const token = signToken(user._id);
-
-  res.status(200).json({
-    status: "success",
-    token,
-    data: {
-      user,
-    },
-  });
+  createSendToken(user, 201, res);
 });
 
 // PROTECTING DATA
@@ -106,7 +111,7 @@ exports.restrictTo = (...roles) => {
 };
 
 // FORGET PASSWORD
-// FIXME: EMAIL FUNCTIONALITY NOT YET WORKING 
+// FIXME: EMAIL FUNCTIONALITY OF FORGOT PASSWORD IS NOT YET WORKING
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
@@ -137,13 +142,58 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
     return next(
-      new AppError("There was an error sending the email. Try again later!", 500)
+      new AppError(
+        "There was an error sending the email. Try again later!",
+        500
+      )
     );
   }
 });
 
+// FIXME: EMAIL FUNCTIONALITY OF FORGOT PASSWORD IS NOT YET WORKING
 // RESET PASSWORD
-// FIXME: EMAIL FUNCTIONALITY NOT YET WORKING 
 exports.resetPassword = catchAsync(async (req, res, next) => {
-  // Implementation goes here
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError("Token is invalid or has expired", 400));
+  }
+
+  // 2) If token has not expired, and there is user, set the new password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  // 3) Update changedPasswordAt property for the user
+  // This will be handled in the user model pre-save middleware
+
+  // 4) Log the user in, send JWT
+  createSendToken(user, 201, res)
+});
+
+// UPDATING PASSWORD
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) Get user from collection
+  const user = await User.findById(req.user.id).select("+password");
+  // 2) Check if POSTed current password is correct
+  if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+    return next(new AppError("Your current password is wrong!", 401));
+  }
+  // 3) If so, update password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
+  // 4) Log user in, send JWT
+  createSendToken(user, 200, res);
 });
