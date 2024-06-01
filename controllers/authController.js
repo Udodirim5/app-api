@@ -12,18 +12,20 @@ const signToken = (id) => {
   });
 };
 
-// const createSendToken = (user, statusCode, res) => {
-//   const token = signToken(newUser._id);
-//   const cookieOptions = {
-//     expires: new Date(
-//       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-//     ),
-//     httpOnly: true,
-//   };
-// };
-
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
+
+  res.cookie("jwt", token, cookieOptions);
+  user.password = undefined;
 
   res.status(statusCode).json({
     status: "success",
@@ -75,7 +77,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // VALIDATE TOKEN
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  console.log(decoded);
 
   // IF USER EXIST
   const currentUser = await User.findById(decoded.id);
@@ -179,7 +180,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // This will be handled in the user model pre-save middleware
 
   // 4) Log the user in, send JWT
-  createSendToken(user, 201, res)
+  createSendToken(user, 201, res);
 });
 
 // UPDATING PASSWORD

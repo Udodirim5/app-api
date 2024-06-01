@@ -12,7 +12,6 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 // USERS CONTROLLERS
-
 exports.updateMe = catchAsync(async (req, res, next) => {
   // 1. Ensure that the route is not for updating passwords
   if (req.body.password || req.body.passwordConfirm) {
@@ -44,11 +43,6 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  // Log to check if the function is being called
-  console.log("deleteMe function called");
-
-  // Log to check if req.user.id is available
-  console.log("User ID:", req.user.id);
   // Update the user's active status to false
   await User.findByIdAndUpdate(req.user.id, { active: false });
 
